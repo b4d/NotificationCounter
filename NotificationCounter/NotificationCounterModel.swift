@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 import Observation
 
 enum RefreshInterval: Int, CaseIterable, Identifiable {
@@ -60,7 +61,7 @@ final class NotificationCounterModel {
 
         refreshInterval = RefreshInterval(
             rawValue: savedRefreshInterval
-        ) ?? .fiveSeconds
+        ) ?? .fifteenSeconds
     }
 
     func start() {
@@ -77,7 +78,7 @@ final class NotificationCounterModel {
 
                 do {
                     try await Task.sleep(
-                        for: .seconds(self?.refreshInterval.rawValue ?? 5)
+                        for: .seconds(self?.refreshInterval.rawValue ?? 15)
                     )
                 } catch {
                     return
@@ -131,6 +132,44 @@ final class NotificationCounterModel {
         start()
     }
 
+    func open(_ badgeItem: DockInspector.BadgeItem) {
+
+        lastErrorMessage = nil
+
+        if let runningApplication = runningApplication(for: badgeItem) {
+            runningApplication.activate(
+                options: [
+                    .activateAllWindows
+                ]
+            )
+            return
+        }
+
+        guard let applicationURL = badgeItem.applicationURL else {
+            lastErrorMessage = "Could not locate \(badgeItem.appName)."
+            return
+        }
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+
+        NSWorkspace.shared.openApplication(
+            at: applicationURL,
+            configuration: configuration
+        ) { [weak self] _, error in
+
+            guard let error else {
+                return
+            }
+
+            let errorMessage = error.localizedDescription
+
+            Task { @MainActor [weak self] in
+                self?.lastErrorMessage = errorMessage
+            }
+        }
+    }
+
     func refresh() async {
 
         refreshLaunchAtLoginStatus()
@@ -165,5 +204,26 @@ final class NotificationCounterModel {
 
         launchesAtLogin = LaunchAtLoginManager.isEnabled
         launchAtLoginStatusMessage = LaunchAtLoginManager.statusMessage
+    }
+
+    private func runningApplication(
+        for badgeItem: DockInspector.BadgeItem
+    ) -> NSRunningApplication? {
+
+        if let bundleIdentifier = badgeItem.bundleIdentifier {
+            return NSRunningApplication
+                .runningApplications(
+                    withBundleIdentifier: bundleIdentifier
+                )
+                .first
+        }
+
+        return NSWorkspace.shared.runningApplications.first {
+            $0.localizedName == badgeItem.appName
+        } ?? NSWorkspace.shared.runningApplications.first {
+            $0.localizedName?.localizedCaseInsensitiveCompare(
+                badgeItem.appName
+            ) == .orderedSame
+        }
     }
 }

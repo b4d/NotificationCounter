@@ -15,9 +15,11 @@ enum DockInspector {
         let appName: String
         let count: Int
         let statusText: String
+        let bundleIdentifier: String?
+        let applicationURL: URL?
 
         var id: String {
-            "\(appName)-\(count)-\(statusText)"
+            bundleIdentifier ?? applicationURL?.absoluteString ?? "\(appName)-\(statusText)"
         }
     }
 
@@ -134,10 +136,21 @@ enum DockInspector {
                 continue
             }
 
+            let appName = appName(from: element)
+            let applicationURL = applicationURL(
+                from: element,
+                appName: appName
+            )
+
             return BadgeItem(
-                appName: appName(from: element),
+                appName: appName,
                 count: count,
-                statusText: statusText
+                statusText: statusText,
+                bundleIdentifier: bundleIdentifier(
+                    from: applicationURL,
+                    appName: appName
+                ),
+                applicationURL: applicationURL
             )
         }
 
@@ -150,6 +163,36 @@ enum DockInspector {
             element,
             attribute: kAXTitleAttribute
         ) ?? "Unknown App"
+    }
+
+    private static func applicationURL(
+        from element: AXUIElement,
+        appName: String
+    ) -> URL? {
+
+        attributeURL(
+            element,
+            attribute: kAXURLAttribute
+        ) ?? runningApplication(
+            named: appName
+        )?.bundleURL
+    }
+
+    private static func bundleIdentifier(
+        from applicationURL: URL?,
+        appName: String
+    ) -> String? {
+
+        if let applicationURL,
+           let bundleIdentifier = Bundle(
+            url: applicationURL
+           )?.bundleIdentifier {
+            return bundleIdentifier
+        }
+
+        return runningApplication(
+            named: appName
+        )?.bundleIdentifier
     }
 
     private static func children(of element: AXUIElement) -> [AXUIElement] {
@@ -186,6 +229,29 @@ enum DockInspector {
 
         if let number = value as? NSNumber {
             return number.stringValue
+        }
+
+        return nil
+    }
+
+    private static func attributeURL(
+        _ element: AXUIElement,
+        attribute: String
+    ) -> URL? {
+
+        guard let value = attributeValue(
+            element,
+            attribute: attribute
+        ) else {
+            return nil
+        }
+
+        if let url = value as? URL {
+            return url
+        }
+
+        if let string = value as? String {
+            return URL(string: string)
         }
 
         return nil
@@ -292,6 +358,15 @@ enum DockInspector {
         }
 
         return count
+    }
+
+    private static func runningApplication(named appName: String) -> NSRunningApplication? {
+
+        NSWorkspace.shared.runningApplications.first {
+            $0.localizedName == appName
+        } ?? NSWorkspace.shared.runningApplications.first {
+            $0.localizedName?.localizedCaseInsensitiveCompare(appName) == .orderedSame
+        }
     }
 }
 

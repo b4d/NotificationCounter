@@ -57,7 +57,11 @@ private struct NotificationCounterMenu: View {
                 Divider()
 
                 ForEach(counter.dockBadgeItems) { item in
-                    Text("\(item.appName): \(item.count)")
+                    Button {
+                        counter.open(item)
+                    } label: {
+                        BadgeItemMenuLabel(item: item)
+                    }
                 }
             }
 
@@ -111,6 +115,36 @@ private struct NotificationCounterMenu: View {
 
         openWindow(id: "settings")
         NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+}
+
+private struct BadgeItemMenuLabel: View {
+
+    let item: DockInspector.BadgeItem
+
+    var body: some View {
+
+        Label {
+            Text("\(item.appName): \(item.count)")
+        } icon: {
+            Image(nsImage: iconImage)
+                .resizable()
+                .frame(width: 16, height: 16)
+        }
+    }
+
+    private var iconImage: NSImage {
+
+        if let applicationURL = item.applicationURL {
+            return NSWorkspace.shared.icon(
+                forFile: applicationURL.path
+            )
+        }
+
+        return NSImage(
+            systemSymbolName: "app.badge",
+            accessibilityDescription: nil
+        ) ?? NSImage()
     }
 }
 
