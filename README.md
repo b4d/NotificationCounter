@@ -1,5 +1,9 @@
 # NotificationCounter
 
+<p align="center">
+  <img src="NotificationCounter/Assets.xcassets/AppIcon.appiconset/AppIcon-128@2x.png" alt="NotificationCounter app icon" width="96" height="96">
+</p>
+
 NotificationCounter is a small native macOS menu bar app that shows the total number of active Dock badges.
 
 The idea came from using a hidden Dock: when the Dock is hidden, checking whether any apps have badge counts means moving the pointer to the bottom of the screen and waiting for the Dock to appear. NotificationCounter keeps that signal visible in the menu bar instead.
@@ -91,3 +95,5 @@ This is a lightweight personal utility. Contributions and small improvements are
 ## Disclaimer
 
 Not one line of code in this project was hand written. The app was built with Codex and Xcode.
+
+Use this app at your own risk. It is provided as-is, without warranty or guarantee of fitness for any purpose.
