@@ -31,7 +31,7 @@ struct NotificationCounterApp: App {
         Window("Settings", id: "settings") {
             SettingsView(counter: counter)
         }
-        .defaultSize(width: 480, height: 460)
+        .defaultSize(width: 480, height: 480)
         .windowResizability(.contentSize)
     }
 }

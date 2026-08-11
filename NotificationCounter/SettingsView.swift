@@ -76,10 +76,19 @@ struct SettingsView: View {
             SettingsSection(title: "About") {
                 LabeledContent("Source", value: "Dock badges")
                 LabeledContent("Version", value: appVersion)
+
+                if let projectWebsiteURL {
+                    LabeledContent("Website") {
+                        Link(
+                            "GitHub",
+                            destination: projectWebsiteURL
+                        )
+                    }
+                }
             }
         }
         .padding(24)
-        .frame(width: 480, height: 460, alignment: .topLeading)
+        .frame(width: 480, height: 480, alignment: .topLeading)
     }
 
     private var appVersion: String {
@@ -89,6 +98,10 @@ struct SettingsView: View {
         ) as? String
 
         return version ?? "1.0"
+    }
+
+    private var projectWebsiteURL: URL? {
+        URL(string: "https://github.com/b4d/NotificationCounter")
     }
 }
 
