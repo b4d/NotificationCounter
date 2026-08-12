@@ -15,11 +15,14 @@ enum DockAutoHideManager {
 
     enum DockAutoHideError: LocalizedError {
         case preferenceWriteFailed
+        case dockRestartFailed
 
         var errorDescription: String? {
             switch self {
             case .preferenceWriteFailed:
                 "Could not update Dock auto-hide preference."
+            case .dockRestartFailed:
+                "Could not restart Dock."
             }
         }
     }
@@ -33,7 +36,15 @@ enum DockAutoHideManager {
             return false
         }
 
-        return CFBooleanGetValue(value as! CFBoolean)
+        if let boolValue = value as? Bool {
+            return boolValue
+        }
+
+        if let numberValue = value as? NSNumber {
+            return numberValue.boolValue
+        }
+
+        return false
     }
 
     static func setEnabled(_ isEnabled: Bool) throws {
@@ -52,17 +63,20 @@ enum DockAutoHideManager {
             throw DockAutoHideError.preferenceWriteFailed
         }
 
-        restartDock()
+        try restartDock()
     }
 
-    private static func restartDock() {
+    private static func restartDock() throws {
 
-        NSRunningApplication
-            .runningApplications(
-                withBundleIdentifier: dockBundleIdentifier
-            )
-            .forEach {
-                $0.forceTerminate()
-            }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
+        process.arguments = ["Dock"]
+
+        try process.run()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            throw DockAutoHideError.dockRestartFailed
+        }
     }
 }

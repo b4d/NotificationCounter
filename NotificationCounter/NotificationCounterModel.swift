@@ -44,6 +44,7 @@ final class NotificationCounterModel {
     private(set) var hasAccessibilityPermission = AccessibilityManager.isTrusted
     private(set) var launchesAtLogin = LaunchAtLoginManager.isEnabled
     private(set) var launchAtLoginStatusMessage = LaunchAtLoginManager.statusMessage
+    private(set) var dockAutoHideEnabled = DockAutoHideManager.isEnabled
     private(set) var refreshInterval: RefreshInterval
     private(set) var lastUpdated: Date?
     private(set) var lastErrorMessage: String?
@@ -132,6 +133,30 @@ final class NotificationCounterModel {
         start()
     }
 
+    func setDockAutoHideEnabled(_ isEnabled: Bool) {
+
+        dockAutoHideEnabled = isEnabled
+        lastErrorMessage = nil
+
+        Task { [weak self] in
+
+            try? await Task.sleep(for: .milliseconds(350))
+
+            do {
+                try DockAutoHideManager.setEnabled(isEnabled)
+                self?.refreshDockAutoHideStatus()
+            } catch {
+                self?.refreshDockAutoHideStatus()
+                self?.lastErrorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func toggleDockAutoHideEnabled() {
+
+        setDockAutoHideEnabled(!dockAutoHideEnabled)
+    }
+
     func open(_ badgeItem: DockInspector.BadgeItem) {
 
         lastErrorMessage = nil
@@ -173,6 +198,7 @@ final class NotificationCounterModel {
     func refresh() async {
 
         refreshLaunchAtLoginStatus()
+        refreshDockAutoHideStatus()
         hasAccessibilityPermission = AccessibilityManager.isTrusted
 
         guard hasAccessibilityPermission else {
@@ -204,6 +230,11 @@ final class NotificationCounterModel {
 
         launchesAtLogin = LaunchAtLoginManager.isEnabled
         launchAtLoginStatusMessage = LaunchAtLoginManager.statusMessage
+    }
+
+    private func refreshDockAutoHideStatus() {
+
+        dockAutoHideEnabled = DockAutoHideManager.isEnabled
     }
 
     private func runningApplication(

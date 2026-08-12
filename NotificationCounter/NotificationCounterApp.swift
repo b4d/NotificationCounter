@@ -98,6 +98,10 @@ private struct NotificationCounterMenu: View {
 
         Divider()
 
+        DockAutoHideButton(counter: counter)
+
+        Divider()
+
         Button {
             openSettings()
         } label: {
@@ -115,6 +119,24 @@ private struct NotificationCounterMenu: View {
 
         openWindow(id: "settings")
         NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+}
+
+private struct DockAutoHideButton: View {
+
+    let counter: NotificationCounterModel
+
+    var body: some View {
+
+        Button {
+            counter.toggleDockAutoHideEnabled()
+        } label: {
+            Label(title, systemImage: "dock.rectangle")
+        }
+    }
+
+    private var title: String {
+        counter.dockAutoHideEnabled ? "Keep Dock Visible" : "Automatically Hide Dock"
     }
 }
 
