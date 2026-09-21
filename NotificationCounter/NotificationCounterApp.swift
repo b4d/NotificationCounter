@@ -38,6 +38,8 @@ struct NotificationCounterApp: App {
 
 private struct NotificationCounterMenu: View {
 
+    @Environment(\.openSettings) private var openSettings
+
     let counter: NotificationCounterModel
 
     var body: some View {
@@ -100,7 +102,10 @@ private struct NotificationCounterMenu: View {
 
         Divider()
 
-        SettingsLink {
+        Button {
+            openSettings()
+            NSApplication.shared.activate(ignoringOtherApps: true)
+        } label: {
             Label("Settings...", systemImage: "gearshape")
         }
 
