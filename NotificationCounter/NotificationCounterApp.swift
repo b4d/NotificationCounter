@@ -28,7 +28,7 @@ struct NotificationCounterApp: App {
         }
         .menuBarExtraStyle(.menu)
 
-        Window("Settings", id: "settings") {
+        Settings {
             SettingsView(counter: counter)
         }
         .defaultSize(width: 520, height: 620)
@@ -37,8 +37,6 @@ struct NotificationCounterApp: App {
 }
 
 private struct NotificationCounterMenu: View {
-
-    @Environment(\.openWindow) private var openWindow
 
     let counter: NotificationCounterModel
 
@@ -102,9 +100,7 @@ private struct NotificationCounterMenu: View {
 
         Divider()
 
-        Button {
-            openSettings()
-        } label: {
+        SettingsLink {
             Label("Settings...", systemImage: "gearshape")
         }
 
@@ -115,11 +111,6 @@ private struct NotificationCounterMenu: View {
         }
     }
 
-    private func openSettings() {
-
-        openWindow(id: "settings")
-        NSApplication.shared.activate(ignoringOtherApps: true)
-    }
 }
 
 private struct DockAutoHideButton: View {
@@ -187,5 +178,12 @@ private struct NotificationCounterMenuLabel: View {
             Text("\(counter.totalCount)")
                 .monospacedDigit()
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Dock notifications")
+        .accessibilityValue(
+            counter.hasAccessibilityPermission
+            ? "\(counter.totalCount)"
+            : "Accessibility permission required"
+        )
     }
 }

@@ -8,7 +8,7 @@
 import Foundation
 import AppKit
 
-enum DockAutoHideManager {
+nonisolated enum DockAutoHideManager {
 
     private static let dockBundleIdentifier = "com.apple.dock"
     private static let autoHideKey = "autohide"
@@ -47,7 +47,7 @@ enum DockAutoHideManager {
         return false
     }
 
-    static func setEnabled(_ isEnabled: Bool) throws {
+    static func setEnabled(_ isEnabled: Bool) async throws {
 
         let value = isEnabled ? kCFBooleanTrue : kCFBooleanFalse
 
@@ -63,19 +63,27 @@ enum DockAutoHideManager {
             throw DockAutoHideError.preferenceWriteFailed
         }
 
-        try restartDock()
+        try await restartDock()
     }
 
-    private static func restartDock() throws {
+    private static func restartDock() async throws {
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
-        process.arguments = ["Dock"]
+        let terminationStatus = try await withCheckedThrowingContinuation {
+            (continuation: CheckedContinuation<Int32, Error>) in
 
-        try process.run()
-        process.waitUntilExit()
+            do {
+                try Process.run(
+                    URL(fileURLWithPath: "/usr/bin/killall"),
+                    arguments: ["Dock"]
+                ) { process in
+                    continuation.resume(returning: process.terminationStatus)
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
 
-        guard process.terminationStatus == 0 else {
+        guard terminationStatus == 0 else {
             throw DockAutoHideError.dockRestartFailed
         }
     }

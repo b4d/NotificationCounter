@@ -9,9 +9,9 @@ import Foundation
 import AppKit
 import ApplicationServices
 
-enum DockInspector {
+nonisolated enum DockInspector {
 
-    struct BadgeItem: Identifiable, Equatable {
+    struct BadgeItem: Identifiable, Equatable, Sendable {
         let appName: String
         let count: Int
         let statusText: String
@@ -36,6 +36,33 @@ enum DockInspector {
             }
         }
     }
+
+    private static let badgeAttributeCandidates = [
+        BadgeAttributeCandidate(
+            name: "AXStatusLabel",
+            allowsBareNumber: true
+        ),
+        BadgeAttributeCandidate(
+            name: "AXBadgeValue",
+            allowsBareNumber: true
+        ),
+        BadgeAttributeCandidate(
+            name: kAXValueAttribute,
+            allowsBareNumber: true
+        ),
+        BadgeAttributeCandidate(
+            name: kAXDescriptionAttribute,
+            allowsBareNumber: false
+        ),
+        BadgeAttributeCandidate(
+            name: kAXHelpAttribute,
+            allowsBareNumber: false
+        ),
+        BadgeAttributeCandidate(
+            name: kAXTitleAttribute,
+            allowsBareNumber: false
+        )
+    ]
 
     static func badgeItems() throws -> [BadgeItem] {
 
@@ -370,34 +397,7 @@ enum DockInspector {
     }
 }
 
-private struct BadgeAttributeCandidate {
+nonisolated private struct BadgeAttributeCandidate {
     let name: String
     let allowsBareNumber: Bool
 }
-
-private let badgeAttributeCandidates = [
-    BadgeAttributeCandidate(
-        name: "AXStatusLabel",
-        allowsBareNumber: true
-    ),
-    BadgeAttributeCandidate(
-        name: "AXBadgeValue",
-        allowsBareNumber: true
-    ),
-    BadgeAttributeCandidate(
-        name: kAXValueAttribute,
-        allowsBareNumber: true
-    ),
-    BadgeAttributeCandidate(
-        name: kAXDescriptionAttribute,
-        allowsBareNumber: false
-    ),
-    BadgeAttributeCandidate(
-        name: kAXHelpAttribute,
-        allowsBareNumber: false
-    ),
-    BadgeAttributeCandidate(
-        name: kAXTitleAttribute,
-        allowsBareNumber: false
-    )
-]

@@ -50,6 +50,8 @@ final class NotificationCounterModel {
     private(set) var lastErrorMessage: String?
 
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    @ObservationIgnored private var dockAutoHideTask: Task<Void, Never>?
+    @ObservationIgnored private var refreshGeneration = 0
     @ObservationIgnored private let userDefaults: UserDefaults
 
     init(userDefaults: UserDefaults = .standard) {
@@ -137,14 +139,19 @@ final class NotificationCounterModel {
 
         dockAutoHideEnabled = isEnabled
         lastErrorMessage = nil
+        dockAutoHideTask?.cancel()
 
-        Task { [weak self] in
-
-            try? await Task.sleep(for: .milliseconds(350))
+        dockAutoHideTask = Task { [weak self] in
 
             do {
-                try DockAutoHideManager.setEnabled(isEnabled)
+                try await Task.sleep(for: .milliseconds(350))
+                try Task.checkCancellation()
+                try await DockAutoHideManager.setEnabled(isEnabled)
+                try Task.checkCancellation()
+
                 self?.refreshDockAutoHideStatus()
+            } catch is CancellationError {
+                return
             } catch {
                 self?.refreshDockAutoHideStatus()
                 self?.lastErrorMessage = error.localizedDescription
@@ -197,6 +204,9 @@ final class NotificationCounterModel {
 
     func refresh() async {
 
+        refreshGeneration &+= 1
+        let generation = refreshGeneration
+
         refreshLaunchAtLoginStatus()
         refreshDockAutoHideStatus()
         hasAccessibilityPermission = AccessibilityManager.isTrusted
@@ -210,7 +220,13 @@ final class NotificationCounterModel {
         }
 
         do {
-            let badgeItems = try DockInspector.badgeItems()
+            let badgeItems = try await Task.detached(priority: .utility) {
+                try DockInspector.badgeItems()
+            }.value
+
+            guard generation == refreshGeneration else {
+                return
+            }
 
             dockBadgeItems = badgeItems
             totalCount = badgeItems.reduce(0) { total, item in
@@ -219,6 +235,10 @@ final class NotificationCounterModel {
             lastUpdated = Date()
             lastErrorMessage = nil
         } catch {
+            guard generation == refreshGeneration else {
+                return
+            }
+
             dockBadgeItems = []
             totalCount = 0
             lastUpdated = Date()

@@ -11,7 +11,7 @@ import ApplicationServices
 
 enum AccessibilityManager {
 
-    static var isTrusted: Bool {
+    nonisolated static var isTrusted: Bool {
         AXIsProcessTrusted()
     }
 

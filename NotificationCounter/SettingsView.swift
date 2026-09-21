@@ -33,7 +33,7 @@ struct SettingsView: View {
                         systemImage: "power"
                     ) {
                         Toggle(
-                            "",
+                            "Launch at Login",
                             isOn: Binding(
                                 get: {
                                     counter.launchesAtLogin
@@ -54,7 +54,7 @@ struct SettingsView: View {
                         systemImage: "arrow.clockwise"
                     ) {
                         Picker(
-                            "",
+                            "Refresh Interval",
                             selection: Binding(
                                 get: {
                                     counter.refreshInterval
@@ -112,6 +112,7 @@ struct SettingsView: View {
                         Button("Open") {
                             counter.requestAccessibilityPermission()
                         }
+                        .accessibilityLabel("Open Accessibility Settings")
                     }
                 }
 
@@ -181,6 +182,7 @@ private struct SettingsHeaderView: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text("Notification Counter")
                     .font(.title2.weight(.semibold))
+                    .accessibilityAddTraits(.isHeader)
 
                 Text("Keep Dock badge counts visible in the menu bar.")
                     .font(.subheadline)
@@ -203,6 +205,7 @@ private struct SettingsSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 8) {
             Label(title, systemImage: systemImage)
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             VStack(spacing: 0) {
                 content
@@ -236,6 +239,7 @@ private struct SettingsRow<Accessory: View>: View {
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -287,6 +291,7 @@ private struct SettingsMessageRow: View {
             Image(systemName: systemImage)
                 .foregroundStyle(.orange)
                 .frame(width: 24)
+                .accessibilityHidden(true)
 
             Text(message)
                 .font(.caption)
